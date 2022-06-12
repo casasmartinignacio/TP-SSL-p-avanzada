@@ -14,13 +14,20 @@ function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState([]);
 
+  const [clientes, setClientes] = useState([]);
+  const [permisos, setPermisos] = useState([]);
+  const [contratos, setContratos] = useState([]);
+
   let databaseUrl = 'http://0.0.0.0:5984';
   const dbClientes = new PouchDB('martin-casas');
-  const remoteDB = new PouchDB(databaseUrl + '/martin-casas', { auth: { username: 'admin', password: 'hernaneta777'}});
+  const remoteDB = new PouchDB(databaseUrl + '/martin-casas', { auth: { username: 'admin', password: 'admin'}});
 
-  const clientes = _filter(data, d => { return d.type === 'client' });
-  const permisos = _filter(data, d => { return d.type === 'licence' });
-  const contratos = _filter(data, d => { return d.type === 'contract' });
+  useEffect(() => {
+    setClientes(_filter(data, d => { return d?.doc?.type === 'client' }));
+    setPermisos(_filter(data, d => { return d?.doc?.type === 'licence' }));
+    setContratos(_filter(data, d => { return d?.doc?.type === 'contract' }));
+    console.log('Actualizo los arrays', clientes, permisos, contratos)
+  }, [data]);
 
   useEffect(() => {
     dbClientes.sync(remoteDB, {
@@ -30,6 +37,7 @@ function App() {
       handleOpenErrorModal('Error al sincronizar')
       console.log('Error [cliente 1]: fallo al sincronizar')
     });
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -67,6 +75,7 @@ function App() {
     dbClientes?.allDocs({
       include_docs: true,
     }).then(result => {
+      console.log('Fetch completado', result.rows)
       setData(result.rows);
     }).catch((err) => {
       handleOpenErrorModal('Error al obtener clientes de la base de datos')
@@ -80,22 +89,22 @@ function App() {
   };
 
   const renderPermisos = (clientId) => {
-    const permisosFiltrados = _filter(permisos, d => { return d.clientId === clientId });
+    const permisosFiltrados = _filter(permisos, d => { return d.doc.clientId === clientId });
     return permisosFiltrados.map((item,key) => { 
       return (
         <li key={key}>
-          {item.nombre} - {item.apellido} - {item.firma}
+          {item.doc.nombre} - {item.doc.apellido} - {item.doc.firma}
         </li>
       )
     })
   };
 
   const renderContratos = (clientId) => {
-    const contratosFiltrados = _filter(contratos, d => { return d.clientId === clientId });
+    const contratosFiltrados = _filter(contratos, d => { return d.doc.clientId === clientId });
     return contratosFiltrados.map((item,key) => { 
       return (
         <li key={key}>
-          {item.hash} - {item.firma}
+          {item.doc.hash} - {item.doc.firma}
         </li>
       )
     })
@@ -131,7 +140,7 @@ function App() {
           </Col>
         </Row>
         {clientes?.map((client, index) =>
-          <div key={client._id} style={{marginTop: '20px', marginBottom: '20px'}}> 
+          <div key={client?.doc?._id} style={{marginTop: '20px', marginBottom: '20px'}}> 
             <div style={{color: 'yellow'}}> <b> Cliente {index + 1} </b> </div>
             <div style={{marginLeft: '20px', color: 'white'}}>
               <Row>
@@ -141,7 +150,7 @@ function App() {
                 Permisos: 
                 <Col>
                   <ul>
-                    {renderPermisos(client?._id)}
+                    {renderPermisos(client?.doc?._id)}
                   </ul>
                 </Col>
               </Row>
@@ -149,7 +158,7 @@ function App() {
                 Contratos:
                 <Col>
                   <ul>
-                    {renderContratos(client?._id)}
+                    {renderContratos(client?.doc?._id)}
                   </ul>
                 </Col>
               </Row>

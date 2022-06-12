@@ -4,15 +4,32 @@ services:
     image: couchdb
     restart: always
     ports:
-      - "5984:5984"
+      - '5984:5984'
     environment:
       - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=hernaneta777
+      - COUCHDB_PASSWORD=admin
     volumes:
-      - ./dbdata:/opt/couchdb/data
+      - './dbdata:/opt/couchdb/data'
   client1:
-    container_name: app-prod
-    image: app-prod
+    container_name: cliente1
+    image: cliente1
     build:
       context: .
-      target: production
+    volumes:
+      - ./clientes/cliente1/src:/app/src
+    ports:
+      - 3000:3000
+  client2:
+    container_name: cliente2
+    image: cliente2
+    build:
+      context: .
+    volumes:
+      - ./src:/app/src
+  client3:
+    container_name: cliente3
+    image: cliente3
+    build:
+      context: .
+    volumes:
+      - ./src:/app/src

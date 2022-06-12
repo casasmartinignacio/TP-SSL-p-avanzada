@@ -12,52 +12,48 @@ async function main() {
     live: true,
     retry: true
   }).on('error', () => {
-    console.log('Error [cliente 2]: fallo al sincronizar')
+    console.log('Error [cliente 3]: fallo al sincronizar')
   });
 
   if (dbClientes) { //ya me conecte a la bd
-    let postPermiso = async function () {
+    let postContrato = async function () {
       // Fetch clientes
       dbClientes.allDocs({
         include_docs: true,
       }).then(result => {
-        //console.log("Evento [cliente 2]: All docs ", result.rows)
+        //console.log("Evento [cliente 3]: All docs ", result.rows)
         //Tomo cliente al azar
         const randomClientId = elegirCliente(result.rows);
-        console.log("Evento [cliente 2]: Cliente elegido ", randomClientId)
+        console.log("Evento [cliente 3]: Cliente elegido ", randomClientId)
         if (randomClientId) {
-          //Genero permiso para una persona random emitido por el cliente elegido
-          const permiso = generarPermiso(randomClientId);
-          //Posteo permiso
+          //Genero contrato para una persona random emitido por el cliente elegido
+          const contrato = generarContrato(randomClientId);
+          //Posteo contrato
           dbClientes.post(
-            permiso
+            contrato
           ).then(() => {
-            console.log("Evento [cliente 2]: Permiso insertado. ", JSON.stringify(permiso))
+            console.log("Evento [cliente 3]: contrato insertado. ", JSON.stringify(contrato))
           }).catch(() => {
-            console.log('Error [cliente 2]: fallo al postear permiso', JSON.stringify(permiso))
+            console.log('Error [cliente 3]: fallo al postear contrato', JSON.stringify(contrato))
           });
         } else {
-          console.log("Evento [cliente 2]: No hay ningun cliente para generar permisos!")
+          console.log("Evento [cliente 3]: No hay ningun cliente para generar contrato!")
         }
       })
 
     };
-    setInterval(postPermiso, 4000);
+    setInterval(postContrato, 4000);
   };
 }
 
-function generarPermiso(clientId) {
-  const nombre = _sample(loteDatos.nombres);
-  const apellido = _sample(loteDatos.apellidos);
+function generarContrato(clientId) {
+  const hash = _sample(loteDatos.hashes);
   const firma = _sample(loteDatos.hashes);
-  const texto = _sample(loteDatos.textos);
   return {
     clientId,
-    nombre,
-    type: "licence",
-    apellido,
-    firma,
-    texto
+    hash,
+    type: "contract",
+    firma
   }
 }
 
