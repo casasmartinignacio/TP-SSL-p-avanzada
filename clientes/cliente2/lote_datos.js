@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-anonymous-default-export
+export default
 {
   "textos": [
     "Morbi vulputate accumsan orci. Aliquam lacinia mollis dolor, eu tincidunt augue. In dignissim tristique ipsum. Sed a accumsan tellus, in commodo erat. Proin eget condimentum neque, at tempor nunc. Suspendisse vel ex non orci facilisis dictum sed fringilla lorem. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce auctor lorem erat, a rutrum mi venenatis at. Etiam vehicula in tellus vel congue. Maecenas rutrum fermentum tortor eget eleifend. Nullam massa lectus, bibendum ut arcu varius, porttitor vehicula felis. Integer posuere aliquet velit nec elementum.",

@@ -1,22 +1,18 @@
 import logo from './images/logo.png';
 import { useState, useEffect } from 'react';
 import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Alert from 'react-bootstrap/Alert';
 import PouchDB from 'pouchdb';
 import _filter from 'lodash/filter';
+import ClientModal from './components/ClientModal';
 
 function App() {
   const [errorModal, setErrorModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState([]);
-  const [name, setName] = useState('');
-  const [tel, setTel] = useState('223000000');
-  const [age, setAge] = useState(0);
 
   let databaseUrl = 'http://0.0.0.0:5984';
   const dbClientes = new PouchDB('martin-casas');
@@ -27,22 +23,19 @@ function App() {
   const contratos = _filter(data, d => { return d.type === 'contract' });
 
   useEffect(() => {
+    dbClientes.sync(remoteDB, {
+      live: true,
+      retry: true
+    }).on('error', () => {
+      handleOpenErrorModal('Error al sincronizar')
+      console.log('Error [cliente 1]: fallo al sincronizar')
+    });
+  }, []);
+
+  useEffect(() => {
     document.body.style.background = 'black';
   });
 
-  const handleTelChange = (e, pos) => {
-    let newTel = tel;
-    newTel = tel.substring(0, pos) + e?.target?.value + tel.substring(pos + e?.target?.value.length);
-    setTel(newTel);
-  };
-
-  const handleNameChange = (e) => {
-    setName(e?.target?.value);
-  };
-
-  const handleAgeChange = (e) => {
-    setAge(e?.target?.value);
-  };
 
   const handleOpenModal = () => {
     setModalVisible(true);
@@ -52,16 +45,7 @@ function App() {
     setModalVisible(false);
   };
 
-  const renderNumbers = () => {
-    const numbers = [];
-    [0,1,2,3,4,5,6,7,8,9].forEach(function(i) {
-      numbers.push(<option key={i} value={i}> {i} </option>);
-    });
-    return numbers;
-  };
-
-  const handleSubmit = () => {
-    console.log(tel, name, age, dbClientes)
+  const handleSubmit = (tel, name, age) => {
     if (tel !== '' && name !== '' && age !== 0) {
       // submit on pouch
       dbClientes?.post({
@@ -76,20 +60,12 @@ function App() {
         console.log(err);
       });
     }
-    setEmptyValues();
     handleCloseModal();
-  };
-
-  const setEmptyValues = () => {
-    setName('');
-    setTel('223000000');
-    setAge(0);
   };
 
   const fetchData = () => {
     dbClientes?.allDocs({
       include_docs: true,
-      attachments: true
     }).then(result => {
       setData(result.rows);
     }).catch((err) => {
@@ -98,24 +74,37 @@ function App() {
     });
   };
 
-  useEffect(() => {
-    dbClientes.sync(remoteDB, {
-      live: true,
-      retry: true
-    }).on('error', () => {
-      handleOpenErrorModal('Error al conectar a base de datos remota (Docker)')
-    });
-  }, []);
-
   const handleOpenErrorModal = (msg) => {
     setErrorModal(true);
     setErrorMsg(msg);
   };
 
+  const renderPermisos = (clientId) => {
+    const permisosFiltrados = _filter(permisos, d => { return d.clientId === clientId });
+    return permisosFiltrados.map((item,key) => { 
+      return (
+        <li key={key}>
+          {item.nombre} - {item.apellido} - {item.firma}
+        </li>
+      )
+    })
+  };
+
+  const renderContratos = (clientId) => {
+    const contratosFiltrados = _filter(contratos, d => { return d.clientId === clientId });
+    return contratosFiltrados.map((item,key) => { 
+      return (
+        <li key={key}>
+          {item.hash} - {item.firma}
+        </li>
+      )
+    })
+  };
+
   return (
     <div style={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column'}}>
       {errorModal && (
-        <Alert variant="danger" onClose={() => { setErrorModal(false); setErrorMsg(''); setEmptyValues(); }} dismissible>
+        <Alert variant="danger" onClose={() => { setErrorModal(false); setErrorMsg(''); }} dismissible>
           <Alert.Heading>Error!</Alert.Heading>
           <p>
             {errorMsg}
@@ -129,80 +118,8 @@ function App() {
         handleSubmit={handleSubmit}
       />
 
-      <Modal
-        show={modalVisible}
-        onHide={handleCloseModal}
-        backdrop="static"
-        keyboard={false}
-        size="xl"
-      >
-        <Form>
-          <Modal.Header closeButton>
-            <Modal.Title>Nuevo cliente</Modal.Title>
-          </Modal.Header>
-        
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Nombre del cliente</Form.Label>
-              <Form.Control placeholder="Nombre" value={name} onChange={handleNameChange} />
-            </Form.Group>
-    
-            <Form.Group className="mb-3">
-              <Form.Label>Telefono</Form.Label>
-              <Row>
-                ( 223 ) -
-                <Col>
-                  <Form.Select size="sm" style={{width: '100px'}} value={tel[3]} onChange={e => handleTelChange(e, 3)}>
-                    {renderNumbers()}
-                  </Form.Select> 
-                </Col>
-                <Col>
-                  <Form.Select size="sm" style={{width: '100px'}} value={tel[4]} onChange={e => handleTelChange(e, 4)}>
-                    {renderNumbers()}
-                  </Form.Select> 
-                </Col>
-                <Col>
-                  <Form.Select size="sm" style={{width: '100px'}} value={tel[5]} onChange={e => handleTelChange(e, 5)}>
-                    {renderNumbers()}
-                  </Form.Select> 
-                </Col>
-                <Col>
-                  <Form.Select size="sm" style={{width: '100px'}} value={tel[6]} onChange={e => handleTelChange(e, 6)}>
-                    {renderNumbers()}
-                  </Form.Select> 
-                </Col>
-                <Col>
-                  <Form.Select size="sm" style={{width: '100px'}} value={tel[7]} onChange={e => handleTelChange(e, 7)}>
-                    {renderNumbers()}
-                  </Form.Select> 
-                </Col>
-                <Col>
-                  <Form.Select size="sm" style={{width: '100px'}} value={tel[8]} onChange={e => handleTelChange(e, 8)}>
-                    {renderNumbers()}
-                  </Form.Select> 
-                </Col>
-              </Row>
-              <Form.Text> {tel} </Form.Text>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Edad</Form.Label>
-              <Form.Range value={age} onChange={handleAgeChange} />
-              <Form.Text> {age} </Form.Text>
-            </Form.Group>
-          </Modal.Body>
-        
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleCloseModal}>Cerrar</Button>
-            <Button variant="primary" onClick={handleSubmit}>
-              Enviar
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-
       <div style={{ alignSelf: 'center', justifyContent: 'center', marginTop: '100px', marginBottom: '100px'}}>
-        <img src={logo} className="App-logo" alt="logo" style={{width: '300px', height: '350px'}} />
+        <img src={logo} className="App-logo" alt="logo" style={{width: '500px', height: '350px'}} />
         <Row>
           <Col>
             <div style={{color: 'yellow', marginTop: '50px'}}>
@@ -213,7 +130,7 @@ function App() {
             <Button onClick={fetchData} variant="link"> Refrescar lista</Button>
           </Col>
         </Row>
-        {data?.map((client, index) =>
+        {clientes?.map((client, index) =>
           <div key={client._id} style={{marginTop: '20px', marginBottom: '20px'}}> 
             <div style={{color: 'yellow'}}> <b> Cliente {index + 1} </b> </div>
             <div style={{marginLeft: '20px', color: 'white'}}>
@@ -221,10 +138,20 @@ function App() {
                 Informacion del cliente: {client?.doc?.name} - {client?.doc?.age} - {client?.doc?.tel}
               </Row>
               <Row>
-                Contratos: 
+                Permisos: 
+                <Col>
+                  <ul>
+                    {renderPermisos(client?._id)}
+                  </ul>
+                </Col>
               </Row>
               <Row>
-                Permisos:
+                Contratos:
+                <Col>
+                  <ul>
+                    {renderContratos(client?._id)}
+                  </ul>
+                </Col>
               </Row>
           </div>
           </div>

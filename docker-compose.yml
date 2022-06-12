@@ -8,6 +8,11 @@ services:
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=hernaneta777
-      - COUCHDB_REMOTE_URL=http://e-mat.fi.mdp.edu.ar:5984
     volumes:
       - ./dbdata:/opt/couchdb/data
+  client1:
+    container_name: app-prod
+    image: app-prod
+    build:
+      context: .
+      target: production
